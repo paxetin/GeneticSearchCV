@@ -96,7 +96,7 @@ class GeneticSearchCV:
                        verbose=False)
 
         # Select the best model from the pareto-front space
-        out = res.X.astype(int) if res.X.shape[0] > 1 else res.X.reshape(1, -1).astype(int)
+        out = res.X.astype(int) if len(res.X.shape) > 1 else res.X.reshape(1, -1).astype(int)
         for individual in out:
             S = self.problem.binary_decode(individual)
             c = ''.join(map(lambda x: str(x), S.values()))

@@ -1,0 +1,6 @@
+{
+    "POPULATIONSIZE": 50, 
+    "NGEN": 100,
+    "CX_RATE": 0.9,
+    "MUTATION_RATE": 0.1
+}

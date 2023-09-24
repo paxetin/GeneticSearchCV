@@ -1,7 +1,7 @@
 {
     "SVC": {
         "C": [0.1, 1, 10],
-        "kernel": ["linear", "rbf"],
+        "kernel": ["linear", "rbf", "poly"],
         "gamma": [0.1, 1, "scale"],
         "degree": [2, 3, 4]
     },

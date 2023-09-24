@@ -1,11 +1,10 @@
-```markdown
 # GeneticSearchCV: Genetic Algorithm-based Hyperparameter Optimization
 
 This repository provides a GeneticSearchCV class that utilizes a Genetic Algorithm (GA) for hyperparameter optimization of machine learning models. 
 The code is designed for both single and multi-objective optimization problems.
 This methods finds the best parameter faster than grid search.
 
-For now, it stably supports classfication model from sci-kit learn packages. 
+For now, it should be able to stably support the classification model from sci-kit learn packages. 
 I will progressively update more methods for other type of task.
 
 ## GeneticSearchCV Class
@@ -70,4 +69,3 @@ best_score = genetic_search.best_score_
 ```
 
 This code provides a flexible framework for optimizing hyperparameters using genetic algorithms, helping you enhance the performance of your machine learning models.
-```

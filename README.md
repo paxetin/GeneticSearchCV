@@ -4,7 +4,7 @@ This repository provides a GeneticSearchCV class that utilizes a Genetic Algorit
 The code is designed for both single and multi-objective optimization problems.
 This methods finds the best parameter faster than grid search.
 
-For now, it should be able to stably support the classification model from sci-kit learn packages. 
+This class now supports both classification model and regression model from sci-kit learn packages. 
 I will progressively update more methods for other type of task.
 
 ## GeneticSearchCV Class
@@ -14,6 +14,7 @@ I will progressively update more methods for other type of task.
 - Supports both single and multi-objective optimization tasks.
 - Allows customization of Pymoo evolutionary algorithm with specified parameters.
 - Utilizes a custom ParamProblem instance for optimization.
+- For the parameter `scoring`, please refer to: https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
 
 ## Installation
 

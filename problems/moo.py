@@ -31,7 +31,6 @@ class MOO_cls(Problem):
         self.bit_len = list(map(lambda x: len(x).bit_length(), self.params.values()))
         self.seen_combinations = {}
         self.n_obj = len(self.scoring)
-        self.neg_scores = ['neg_brier_score', 'neg_log_loss']
 
         # Initialize the problem with the appropriate number of decision variables, objectives, and constraints
         super().__init__(n_var=sum(self.bit_len),
@@ -47,7 +46,7 @@ class MOO_cls(Problem):
             S = self.binary_decode(individual)
             fvalues, gvalue = self._get_fitness_values(S)
             for i, k in enumerate(Fs.keys()):
-                f = -fvalues[i] if self.scoring[i] not in self.neg_scores else fvalues
+                f = -fvalues[i]
                 Fs[k].append(f)
             Gs.append(gvalue)
 
@@ -84,7 +83,7 @@ class MOO_cls(Problem):
     # Calculate fitness values by cross-validation using the estimator
     def _get_result(self, S):
         cls = self.estimator.set_params(**S)
-        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring)
+        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring, n_jobs=self.cv)
         fvalues = []
         for v in list(cv_result.values())[2:]:
             fvalues += [np.mean(v)]

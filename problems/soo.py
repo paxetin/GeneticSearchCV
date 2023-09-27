@@ -47,7 +47,7 @@ class SOO_cls(Problem):
             S = self.binary_decode(individual)
             fvalues, gvalue = self._get_fitness_values(S)
             
-            f = -fvalues if self.scoring not in self.neg_scores else fvalues
+            f = -fvalues
             Fs.append(f)
             Gs.append(gvalue)
 
@@ -82,7 +82,7 @@ class SOO_cls(Problem):
     # Calculate fitness values by cross-validation using the estimator
     def _get_result(self, S):
         cls = self.estimator.set_params(**S)
-        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring)
+        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring, n_jobs=self.cv)
         fvalues = np.mean(cv_result[f'test_score'])
         return fvalues, 0
 

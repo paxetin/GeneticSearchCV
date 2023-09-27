@@ -7,6 +7,7 @@ from pymoo.optimize import minimize
 from problems import soo, moo
 from typing import *
 import json
+import numpy as np
 
 # Define a genetic search optimization class
 class GeneticSearchCV:
@@ -100,7 +101,13 @@ class GeneticSearchCV:
         for individual in out:
             S = self.problem.binary_decode(individual)
             c = ''.join(map(lambda x: str(x), S.values()))
-            if self.problem.seen_combinations[c][0] > self.best_score_:
-                self.best_score_ = self.problem.seen_combinations[c][0]
+            if self._less_is_better(c):
+                self.best_score_ = self.problem.seen_combinations[c][:-1]
                 self.best_params_ = S
         self.best_estimator_ = self.estimator.set_params(**self.best_params_)
+
+    def _less_is_better(self, c):
+        if self.MOO:
+            return np.mean(self.problem.seen_combinations[c][:-1]) < np.mean(self.best_score_)
+        else:
+            return self.problem.seen_combinations[c][0] < self.best_score_

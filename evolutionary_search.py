@@ -108,16 +108,12 @@ class GeneticSearchCV:
 
         # Select the best model from the pareto-front space
         out = res.X.astype(int) if len(res.X.shape) > 1 else res.X.reshape(1, -1).astype(int)
+        solution_space = {}
         for individual in out:
             S = self.problem.decode(individual)
             c = ''.join(map(lambda x: str(x), S.values()))
-            if self._less_is_better(c):
-                self.best_score_ = self.problem.seen_combinations[c][:-1]
-                self.best_params_ = S
-        self.best_estimator_ = self.estimator.set_params(**self.best_params_)
+            solution_space[c] = [S, self.problem.seen_combinations[c][:-1]]
 
-    def _less_is_better(self, c):
-        if self.MOO:
-            return np.mean(self.problem.seen_combinations[c][:-1]) < np.mean(self.best_score_)
-        else:
-            return self.problem.seen_combinations[c][0] < self.best_score_
+        self.best_params_, min_value = min(solution_space.values(), key=lambda x: x[1][-1])
+        self.best_score_ = min_value
+        self.best_estimator_ = self.estimator.set_params(**self.best_params_)

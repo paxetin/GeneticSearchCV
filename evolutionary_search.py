@@ -1,6 +1,8 @@
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.pntx import SinglePointCrossover
+from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.bitflip import BitflipMutation
+from pymoo.operators.mutation.pm import PolynomialMutation
 from pymoo.operators.sampling.rnd import BinaryRandomSampling
 from pymoo.termination.default import DefaultMultiObjectiveTermination
 from pymoo.optimize import minimize
@@ -39,22 +41,24 @@ class GeneticSearchCV:
                  scoring: Optional[str or list]=None,
                  cv: Optional[int]=None,
                  algorithm: Optional[object]=None,
-                 ga_params: Optional[dict]=None):
+                 ga_params: Optional[dict]=None,
+                 encode_type: str='int'):
         
         # Initialize the genetic search with the given parameters
         self.estimator = estimator
         self.param_grid = param_grid
         self.cv = cv
+        self.encode_type = encode_type
 
         # Determine whether it's a single-objective optimization problem or multi-objective optimization problem
         if type(scoring) == list and len(scoring) > 1:
             self.MOO = True
             self.scoring = scoring
-            self.problem = moo.MOO_cls(self.estimator, self.param_grid, self.scoring, self.cv)
+            self.problem = moo.MOO(self.estimator, self.param_grid, self.scoring, self.cv, self.encode_type)
         else:
             self.MOO = False
             self.scoring = "".join(scoring) if type(scoring) == list else scoring
-            self.problem = soo.SOO_cls(self.estimator, self.param_grid, self.scoring, self.cv)
+            self.problem = soo.SOO(self.estimator, self.param_grid, self.scoring, self.cv, self.encode_type)
 
         # Set genetic algorithm parameters or use default values
         self.ga_params = ga_params if ga_params else self._default_ga_params()
@@ -65,18 +69,24 @@ class GeneticSearchCV:
         if algorithm:
             self.algorithm = algorithm
         else:
-            self.algorithm = NSGA2(pop_size=self.POPULATIONSIZE,
-                                    sampling=BinaryRandomSampling(),
-                                    crossover=SinglePointCrossover(prob=self.CX_RATE),
-                                    mutation=BitflipMutation(prob=self.MUTATION_RATE),
-                                    eliminate_duplicates=True)
+            if self.encode_type == 'binary':
+                self.algorithm = NSGA2(pop_size=self.POPULATIONSIZE,
+                                        sampling=BinaryRandomSampling(),
+                                        crossover=SinglePointCrossover(prob=self.CX_RATE),
+                                        mutation=BitflipMutation(prob=self.MUTATION_RATE),
+                                        eliminate_duplicates=True)
+            else:
+                self.algorithm = NSGA2(pop_size=self.POPULATIONSIZE,
+                                        crossover=SBX(prob=self.CX_RATE, eta=200),
+                                        mutation=PolynomialMutation(prob=self.MUTATION_RATE),
+                                        eliminate_duplicates=True)  
 
         # Define the termination condition
         self.termination = DefaultMultiObjectiveTermination(n_max_gen=self.NGEN)
         
         # Initialize the attributes for best params
         self.best_estimator_ = None
-        self.best_score_ = [0 for _ in range(len(self.scoring))] if self.MOO else 0
+        self.best_score_ = [0] * len(self.scoring) if self.MOO else 0
         self.best_params_ = None
 
     # Default genetic algorithm parameters
@@ -99,7 +109,7 @@ class GeneticSearchCV:
         # Select the best model from the pareto-front space
         out = res.X.astype(int) if len(res.X.shape) > 1 else res.X.reshape(1, -1).astype(int)
         for individual in out:
-            S = self.problem.binary_decode(individual)
+            S = self.problem.decode(individual)
             c = ''.join(map(lambda x: str(x), S.values()))
             if self._less_is_better(c):
                 self.best_score_ = self.problem.seen_combinations[c][:-1]

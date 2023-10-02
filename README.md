@@ -2,16 +2,17 @@
 
 This repository provides a GeneticSearchCV class that utilizes a Genetic Algorithm (GA) for hyperparameter optimization of machine learning models. 
 The code is designed for both single and multi-objective optimization problems.
-This methods finds the best parameter faster than grid search.
+This methods find out the best parameter faster than grid search when the size of aimed hyperparameter grid is large.
 
-This class now supports both classification model and regression model from sci-kit learn packages. 
-I will progressively update more methods for other type of task.
+This class now supports Integer Encoding which enhance the searching speed.
+I'm currently working on searching hyperparameters within designated range and will progressively update more methods for other type of task.
 
 ## GeneticSearchCV Class
 
 - The core class for GA-based hyperparameter optimization.
 - The default genetic algorithm is NSGA-II (Non-dominated Sorting Genetic Algorithm II).
 - Supports both single and multi-objective optimization tasks.
+- Supports both classification model and regression model from sci-kit learn packages. 
 - Allows customization of Pymoo evolutionary algorithm with specified parameters.
 - Utilizes a custom ParamProblem instance for optimization.
 - For the parameter `scoring`, please refer to: https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter

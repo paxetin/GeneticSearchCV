@@ -2,7 +2,7 @@ from pymoo.core.problem import Problem
 from sklearn.model_selection import cross_validate
 import numpy as np
 
-class MOO_cls(Problem):
+class MOO(Problem):
     """
     Custom Problem class for multi-objectives hyperparameter optimization of classification model.
 
@@ -16,26 +16,33 @@ class MOO_cls(Problem):
         param_grid (dict): A dictionary of hyperparameter grids to be searched.
         scoring (str or list, optional): Scoring metric(s) to optimize.
         cv (int, optional): Number of cross-validation folds.
-
-    Methods:
-        set_data: Setting the features and labels as model input.
     """
-    def __init__(self, estimator, param_grid, scoring, cv):
+    def __init__(self, estimator, param_grid, scoring, cv, encode_type):
         # Initialize the problem with the given parameters
         self.estimator = estimator
         self.params = param_grid
         self.scoring = scoring
         self.cv = cv
+        self.encode_type = encode_type
 
         # Calculate the binary representation length for each parameter in param_grid
-        self.bit_len = list(map(lambda x: len(x).bit_length(), self.params.values()))
+        if self.encode_type == 'binary':
+            self.bit_len = list(map(lambda x: len(x).bit_length(), self.params.values()))
+            gene_len = sum(self.bit_len)
+            xl, xu = None, None
+        else:
+            self.bit_len = list(map(lambda x: len(x)-1, self.params.values()))
+            gene_len = len(self.bit_len)
+            xl, xu = 0, max(self.bit_len)
         self.seen_combinations = {}
         self.n_obj = len(self.scoring)
 
         # Initialize the problem with the appropriate number of decision variables, objectives, and constraints
-        super().__init__(n_var=sum(self.bit_len),
+        super().__init__(n_var=gene_len,
                          n_obj=self.n_obj,
-                         n_ieq_constr=1)
+                         n_ieq_constr=1,
+                         xl=xl,
+                         xu=xu)
 
     # Custom evaluation method for the optimization problem
     def _evaluate(self, x, out, *args, **kwargs):
@@ -43,10 +50,10 @@ class MOO_cls(Problem):
         Fs, Gs = self._init_results()
 
         for individual in population:
-            S = self.binary_decode(individual)
+            S = self.decode(individual)
             fvalues, gvalue = self._get_fitness_values(S)
             for i, k in enumerate(Fs.keys()):
-                f = -fvalues[i]
+                f = fvalues[i]
                 Fs[k].append(f)
             Gs.append(gvalue)
 
@@ -55,16 +62,30 @@ class MOO_cls(Problem):
         out["F"] = np.column_stack(list(out_f))
         out["G"] = np.column_stack(list(Gs))
 
+    def integer_decode(self, individual):
+        S= {}
+        for i, v in enumerate(individual):
+            S[list(self.params.keys())[i]] = self.params[list(self.params.keys())[i]][v]
+        return S
+
     # Decode the binary representation of parameters to their original values
-    def binary_decode(self, individual):
+    def decode(self, individual):
         S, loc = {}, 0
+
         for i, l in enumerate(self.bit_len):
-            decoded_idx = int(''.join(map(str, individual[loc:loc+l])), 2)
-            if decoded_idx < len(self.params[list(self.params.keys())[i]]): 
-                S[list(self.params.keys())[i]] = self.params[list(self.params.keys())[i]][decoded_idx]
-                loc += l
-            else: 
-                return None
+            if self.encode_type == 'binary':
+                decoded_idx = int(''.join(map(str, individual[loc:loc+l])), 2)
+                if decoded_idx < len(self.params[list(self.params.keys())[i]]): 
+                    S[list(self.params.keys())[i]] = self.params[list(self.params.keys())[i]][decoded_idx]
+                    loc += l
+                else: 
+                    return None
+            else:
+                decoded_idx = individual[i]
+                if decoded_idx <= self.bit_len[i]:
+                    S[list(self.params.keys())[i]] = self.params[list(self.params.keys())[i]][decoded_idx]
+                else:
+                    return None
         return S
 
     # Calculate fitness values and constraints for a given parameter combination
@@ -83,10 +104,10 @@ class MOO_cls(Problem):
     # Calculate fitness values by cross-validation using the estimator
     def _get_result(self, S):
         cls = self.estimator.set_params(**S)
-        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring, n_jobs=self.cv)
+        cv_result = cross_validate(cls, self._x, self._y, cv=self.cv, scoring=self.scoring, n_jobs=4)
         fvalues = []
         for v in list(cv_result.values())[2:]:
-            fvalues += [np.mean(v)]
+            fvalues += [-np.mean(v)]
         return fvalues, 0
 
     # Initialize the result structures for objectives and constraints
@@ -96,7 +117,6 @@ class MOO_cls(Problem):
             result[f'fvalue{int(i+1)}'] = []
         return result, []
 
-    # Set x & y for training
     def set_data(self, x, y):
         self._x = x
         self._y = y

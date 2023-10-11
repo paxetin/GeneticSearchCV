@@ -6,7 +6,7 @@ from pymoo.operators.mutation.pm import PolynomialMutation
 from pymoo.operators.sampling.rnd import BinaryRandomSampling
 from pymoo.termination.default import DefaultMultiObjectiveTermination
 from pymoo.optimize import minimize
-from problems import soo, moo
+from genetic_search.problems import soo, moo
 from typing import *
 import json
 import numpy as np
@@ -91,7 +91,7 @@ class GeneticSearchCV:
 
     # Default genetic algorithm parameters
     def _default_ga_params(self):
-        with open('./default_params/ga_params.json', 'r') as p:
+        with open('./genetic_search/default_params/ga_params.json', 'r') as p:
             ga_params = json.load(p)
         return ga_params
 
@@ -115,5 +115,5 @@ class GeneticSearchCV:
             solution_space[c] = [S, self.problem.seen_combinations[c][:-1]]
 
         self.best_params_, min_value = min(solution_space.values(), key=lambda x: x[1][-1])
-        self.best_score_ = min_value
+        self.best_score_ = np.abs(min_value)
         self.best_estimator_ = self.estimator.set_params(**self.best_params_)

@@ -30,7 +30,7 @@ class GeneticSearchCV:
     Methods:
         fit(x, y): Fit the GeneticSearchCV instance to the data.
 
-    Attributes:
+    Properties:
         best_estimator_ (object): The best machine learning model found.
         best_score_ (float or list): The best score(s) achieved.
         best_params_ (dict): The best hyperparameter combination found.
@@ -85,9 +85,21 @@ class GeneticSearchCV:
         self.termination = DefaultMultiObjectiveTermination(n_max_gen=self.NGEN)
         
         # Initialize the attributes for best params
-        self.best_estimator_ = None
-        self.best_score_ = [0] * len(self.scoring) if self.MOO else 0
-        self.best_params_ = None
+        self._best_estimator = None
+        self._best_score = [0] * len(self.scoring) if self.MOO else 0
+        self._best_params = None
+
+    @property
+    def best_estimator_(self):
+        return self._best_estimator
+    
+    @property
+    def best_score_(self):
+        return self._best_score
+    
+    @property
+    def best_params_(self):
+        return self._best_params
 
     # Default genetic algorithm parameters
     def _default_ga_params(self):
@@ -114,6 +126,6 @@ class GeneticSearchCV:
             c = ''.join(map(lambda x: str(x), S.values()))
             solution_space[c] = [S, self.problem.seen_combinations[c][:-1]]
 
-        self.best_params_, min_value = min(solution_space.values(), key=lambda x: x[1][-1])
-        self.best_score_ = np.abs(min_value)
-        self.best_estimator_ = self.estimator.set_params(**self.best_params_)
+        self._best_params, min_value = min(solution_space.values(), key=lambda x: x[1][-1])
+        self._best_score = np.abs(min_value)
+        self._best_estimator = self.estimator.set_params(**self._best_params)

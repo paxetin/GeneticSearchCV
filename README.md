@@ -50,7 +50,7 @@ To install the required packages for this code, follow these steps:
 After installing the requirements, you can use the GeneticSearchCV class for hyperparameter optimization in your Python projects.
 
 ```python
-from evolutionary_search import GeneticSearchCV
+from genetic_search import GeneticSearchCV
 
 # Define your machine learning model and hyperparameter grid
 estimator = YourEstimatorClass()
